@@ -9,6 +9,9 @@ router = APIRouter(prefix="/history", tags=["history"])
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "../data/history.db")
 
+# Ensure the data directory exists (Railway containers don't persist empty dirs)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
