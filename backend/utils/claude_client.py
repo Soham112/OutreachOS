@@ -203,6 +203,27 @@ GENERATE: {message_type}
             elif followup_started:
                 followup_lines.append(line)
         followup_dm = "\n".join(followup_lines).strip()
+
+        # Hard enforce 300-char limit — trim via a second Claude call if needed
+        if len(connection_request) > 300:
+            trim_response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=200,
+                system=SYSTEM_PROMPT,
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        f"This LinkedIn connection request is {len(connection_request)} characters, "
+                        f"which exceeds the 300-character hard limit.\n\n"
+                        f"\"{connection_request}\"\n\n"
+                        f"Rewrite it to be under 280 characters. Keep the candidate's intent clear "
+                        f"(they want the {role_label} role), keep one specific reference to the recipient, "
+                        f"and remove no em dashes. Output ONLY the rewritten message, nothing else."
+                    ),
+                }],
+            )
+            connection_request = trim_response.content[0].text.strip()
+
         return {"connection_request": connection_request, "followup_dm": followup_dm, "raw": raw}
 
     # Cover letter — body only, no subject line
@@ -235,5 +256,25 @@ GENERATE: {message_type}
                 body_lines.append(line)
         body = "\n".join(body_lines).strip()
         return {"subject": subject, "body": body, "raw": raw}
+
+    # Hard enforce 300-char limit for plain connection requests
+    if message_type == "connection_request" and len(raw) > 300:
+        trim_response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=200,
+            system=SYSTEM_PROMPT,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f"This LinkedIn connection request is {len(raw)} characters, "
+                    f"which exceeds the 300-character hard limit.\n\n"
+                    f"\"{raw}\"\n\n"
+                    f"Rewrite it to be under 280 characters. Keep the intent clear, "
+                    f"keep one specific reference to the recipient, no em dashes. "
+                    f"Output ONLY the rewritten message, nothing else."
+                ),
+            }],
+        )
+        raw = trim_response.content[0].text.strip()
 
     return {"message": raw}
