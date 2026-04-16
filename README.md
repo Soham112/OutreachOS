@@ -2,23 +2,26 @@
 
 AI-powered personalized job outreach automation built for Soham Patil.
 
+**Live:** [outreach-os-lyart.vercel.app](https://outreach-os-lyart.vercel.app)
+
 ## Tech Stack
 
-- **Frontend**: Next.js 14 + Tailwind CSS (deployed on Vercel)
-- **Backend**: FastAPI + Python (deployed on Railway)
+- **Frontend**: Next.js 14 + Tailwind CSS → Vercel
+- **Backend**: FastAPI + Python → Railway
 - **LLM**: Anthropic Claude (`claude-sonnet-4-20250514`)
 - **PDF Parsing**: pdfplumber
-- **Database**: SQLite (local history log)
+- **Database**: SQLite (auto-created at runtime)
 
 ---
 
 ## Features
 
-- **Upload & Analyze**: Drag-and-drop LinkedIn profile PDF + optional Job Description
+- **Upload & Analyze**: Drag-and-drop LinkedIn profile PDF + optional Job Description (PDF or pasted text)
 - **Smart Detection**: Auto-detects Recruiter vs. Hiring Manager from title keywords
-- **6 Message Types**: Connection request, follow-up, InMail, and 3 cold email variants
-- **Live Character Counter**: 300-character enforcement for LinkedIn connection requests
-- **History Log**: SQLite-backed table with status tracking (Draft → Sent → Replied)
+- **6 Message Types**: Connection request, follow-up, InMail, and 3 cold email variants (short / detailed / follow-up)
+- **Live Character Counter**: 300-character hard limit enforced for LinkedIn connection requests
+- **One-click Copy**: Copy any message or subject+body together
+- **History Log**: SQLite-backed table with status tracking (Draft → Sent → Replied → No Response)
 
 ---
 
@@ -29,17 +32,17 @@ OutreachOS/
 ├── backend/
 │   ├── main.py                  # FastAPI app entry point
 │   ├── requirements.txt
-│   ├── venv/                    # Python virtual environment
+│   ├── .env.example             # Template — never put real keys here
 │   ├── routers/
-│   │   ├── analyze.py           # PDF parsing + profile extraction
+│   │   ├── analyze.py           # PDF upload + profile extraction
 │   │   ├── generate.py          # Claude API message generation
 │   │   └── history.py           # SQLite CRUD for history log
 │   ├── utils/
-│   │   ├── pdf_parser.py        # pdfplumber extraction
-│   │   ├── claude_client.py     # Anthropic SDK wrapper + prompts
+│   │   ├── pdf_parser.py        # pdfplumber text extraction
+│   │   ├── claude_client.py     # Anthropic SDK wrapper + system prompts
 │   │   └── profile_detector.py  # Recruiter vs. Hiring Manager detection
 │   └── data/
-│       └── history.db           # SQLite database (auto-created)
+│       └── history.db           # SQLite database (auto-created at startup)
 └── frontend/
     ├── app/
     │   ├── page.tsx             # Screen 1: Upload & Analyze
@@ -52,21 +55,23 @@ OutreachOS/
     │   ├── MessageTabs.tsx
     │   ├── CopyButton.tsx
     │   └── HistoryTable.tsx
-    └── lib/
-        └── api.ts               # Axios API client
+    ├── lib/
+    │   └── api.ts               # Axios API client
+    └── vercel.json              # Vercel build config
 ```
 
 ---
 
 ## Local Setup
 
-### 1. Clone and navigate
+### 1. Clone
 
 ```bash
-cd "OutreachOS"
+git clone https://github.com/Soham112/OutreachOS.git
+cd OutreachOS
 ```
 
-### 2. Backend setup
+### 2. Backend
 
 ```bash
 cd backend
@@ -75,11 +80,11 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create your `.env` file:
+Create your `.env` file (never edit `.env.example` with real keys — it is committed to git):
 
 ```bash
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Open .env and set your ANTHROPIC_API_KEY
 ```
 
 Start the backend:
@@ -88,44 +93,47 @@ Start the backend:
 uvicorn main:app --reload --port 8000
 ```
 
-The API will be at `http://localhost:8000`. Docs at `http://localhost:8000/docs`.
+API runs at `http://localhost:8000` · Interactive docs at `http://localhost:8000/docs`
 
-### 3. Frontend setup
+### 3. Frontend
 
 ```bash
 cd frontend
 cp .env.local.example .env.local
+# Set NEXT_PUBLIC_API_URL=http://localhost:8000 in .env.local
 npm install
 npm run dev
 ```
 
-The app will be at `http://localhost:3000`.
+App runs at `http://localhost:3000`
 
 ---
 
 ## Environment Variables
 
-### Backend (`backend/.env`)
+### Backend — `backend/.env` (gitignored, never committed)
 
 | Variable | Description |
 |---|---|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key from console.anthropic.com |
 
-### Frontend (`frontend/.env.local`)
+### Frontend — `frontend/.env.local` (gitignored, never committed)
 
 | Variable | Description |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Backend URL (default: `http://localhost:8000`) |
+| `NEXT_PUBLIC_API_URL` | Backend base URL — `http://localhost:8000` locally, Railway URL in production |
+
+> **Important**: `NEXT_PUBLIC_*` variables are baked into the Next.js build at compile time. After changing this value in Vercel you must trigger a **Redeploy** for it to take effect.
 
 ---
 
 ## How to Use
 
-1. **Upload** — Go to the Upload & Analyze screen. Drop a LinkedIn profile PDF (download via LinkedIn → More → Save to PDF). Optionally attach a Job Description PDF or paste JD text.
+1. **Upload** — Drop a LinkedIn profile PDF (LinkedIn → More → Save to PDF). Optionally attach a Job Description PDF or paste JD text.
 2. **Analyze** — Click "Analyze Profile" to extract name, role, company, skills, and auto-detect Recruiter vs. Hiring Manager.
-3. **Generate** — Click "Generate Outreach" to go to the generation screen. Pick a tab (Connection Request / Follow-up / InMail / Cold Email) and click Generate.
+3. **Generate** — Click "Generate Outreach". Pick a tab and click Generate — Claude writes a tailored message.
 4. **Copy & Save** — Copy the message with one click. Save it to history to track its status.
-5. **Track** — Visit the History page to see all saved messages and update their status (Draft → Sent → Replied).
+5. **Track** — Visit the History page to update status (Draft → Sent → Replied) and view past messages.
 
 ---
 
@@ -133,21 +141,34 @@ The app will be at `http://localhost:3000`.
 
 ### Frontend → Vercel
 
-1. Push the `frontend/` folder to a GitHub repo (or the whole monorepo)
-2. Import into [vercel.com](https://vercel.com), set root directory to `frontend`
-3. Add environment variable: `NEXT_PUBLIC_API_URL=https://your-railway-backend.up.railway.app`
+1. Import `Soham112/OutreachOS` at [vercel.com/new](https://vercel.com/new)
+2. Set **Root Directory** to `frontend`
+3. Add environment variable:
+   - `NEXT_PUBLIC_API_URL` = `https://your-service.up.railway.app`
 4. Deploy
+5. After any env var change, go to **Deployments → Redeploy** to rebuild
 
 ### Backend → Railway
 
-1. Push `backend/` to GitHub
-2. Create new project on [railway.app](https://railway.app), connect repo
-3. Set root directory to `backend/`
-4. Add environment variable: `ANTHROPIC_API_KEY=sk-ant-...`
+1. Create new project at [railway.app](https://railway.app) → Deploy from GitHub → `Soham112/OutreachOS`
+2. Set **Root Directory** to `backend`
+3. Go to **Settings → Networking → Generate Domain** to get a public URL
+4. Add environment variable:
+   - `ANTHROPIC_API_KEY` = your key from console.anthropic.com
 5. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. Deploy — Railway will install from `requirements.txt` automatically
+6. Deploy — Railway installs from `requirements.txt` automatically
 
-> **Note**: For Railway, SQLite persists only within the container. For production, swap SQLite for PostgreSQL using Railway's managed Postgres addon and update `history.py` to use `asyncpg` or `databases`.
+Verify the backend is reachable by visiting `https://your-service.up.railway.app/health` — should return `{"status":"ok"}`.
+
+> **SQLite on Railway**: The `data/` directory is created automatically at startup. Note that SQLite resets on every redeploy since Railway's filesystem is ephemeral. Add a Railway Volume mounted at `/app/data` to persist history across deploys.
+
+---
+
+## Security
+
+- **Never** put real API keys in `.env.example` — that file is committed to git
+- Real secrets go in `backend/.env` (gitignored) locally, or as Railway environment variables in production
+- The `.gitignore` excludes: `backend/venv/`, `backend/.env`, `backend/data/history.db`, `frontend/node_modules/`, `frontend/.next/`, `frontend/.env.local`
 
 ---
 
@@ -162,5 +183,6 @@ The app will be at `http://localhost:3000`.
 | `GET` | `/history/{id}` | Get single entry |
 | `PATCH` | `/history/{id}/status` | Update entry status |
 | `DELETE` | `/history/{id}` | Delete entry |
+| `GET` | `/health` | Health check |
 
-Full interactive docs available at `http://localhost:8000/docs` when running locally.
+Full interactive docs at `http://localhost:8000/docs` when running locally.
