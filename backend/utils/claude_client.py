@@ -99,9 +99,10 @@ FOLLOWUP_DM: [text here]
 
 CONNECTION_REQUEST rules:
 - STRICT LIMIT: Under 280 characters total — count every character, this is a hard LinkedIn limit
-- Acknowledge you saw they're hiring for {role_name} at their company
-- Add one specific thing about them or their company that made you want to reach out
-- End naturally — the goal is just to get them to accept, no pitch yet
+- Acknowledge you saw they're hiring for {role_name} and that you're interested in the role — make this clear, not vague
+- Add one specific thing about them or their company that makes this role genuinely appealing
+- End with intent: "would love to connect" or "happy to share my background" — make it clear you're reaching out as a candidate
+- Do NOT end with "learn more about what you're building" — that sounds like a networker, not a candidate
 - No buzzwords, no "I am writing to", no emojis
 
 FOLLOWUP_DM rules (this is sent after they accept the connection):
