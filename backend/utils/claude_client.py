@@ -45,6 +45,7 @@ RULES:
 - For hiring managers: focus on technical depth, specific relevant work, what Soham can contribute
 - Always be honest — only claim skills and experience Soham actually has
 - Do not add placeholder text like [Your Name] or [Company] — use actual names
+- Never use em dashes (—) anywhere in the message. Use a comma, period, or rewrite the sentence instead.
 """.strip()
 
 MESSAGE_TYPE_INSTRUCTIONS = {
