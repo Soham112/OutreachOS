@@ -31,7 +31,7 @@ export interface GenerateRequest {
     | "cold_email_detailed"
     | "cold_email_followup"
     | "cover_letter"
-    | "actively_hiring_dm"
+    | "actively_hiring_sequence"
     | "post_application_dm";
   jd_text?: string;
   role_name?: string;
@@ -41,6 +41,8 @@ export interface GenerateResult {
   message?: string;
   subject?: string;
   body?: string;
+  connection_request?: string;
+  followup_dm?: string;
   raw?: string;
 }
 

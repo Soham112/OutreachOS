@@ -91,15 +91,27 @@ SUBJECT: [subject line here]
 BODY: [body text here]
 - Very brief, light touch, no pressure""",
 
-    "actively_hiring_dm": """Generate a LinkedIn direct message to someone who has publicly signaled they are hiring.
-Length: 150-200 words.
-- Open by directly acknowledging you saw they're hiring for {role_name} — do not be vague or say "I came across your profile"
-- One specific sentence about their company, product, or work that genuinely attracted Soham to this role
-- Two to three sentences of the most relevant experience/achievements that map to what they need — be specific, use real numbers
-- Close with a direct ask: "happy to send my resume" or "open to a quick call this week"
-- Tone: peer-level, confident, direct. These are founders and engineers — not corporate hiring managers. Skip the formality.
-- Do NOT open with "I hope this message finds you well" or "I am writing to express my interest"
-- Output ONLY the message text, nothing else.""",
+    "actively_hiring_sequence": """Generate TWO LinkedIn messages for someone who has publicly signaled they are hiring for {role_name}.
+
+Format your response EXACTLY as:
+CONNECTION_REQUEST: [text here]
+FOLLOWUP_DM: [text here]
+
+CONNECTION_REQUEST rules:
+- STRICT LIMIT: Under 280 characters total — count every character, this is a hard LinkedIn limit
+- Acknowledge you saw they're hiring for {role_name} at their company
+- Add one specific thing about them or their company that made you want to reach out
+- End naturally — the goal is just to get them to accept, no pitch yet
+- No buzzwords, no "I am writing to", no emojis
+
+FOLLOWUP_DM rules (this is sent after they accept the connection):
+- Length: 150-200 words
+- Open by referencing the role directly — do not re-introduce yourself from scratch
+- One specific sentence about their company/work that genuinely attracted Soham
+- Two to three sentences of the most relevant experience with real numbers
+- Close with a direct, low-pressure ask: "happy to send resume" or "open to a quick call"
+- Tone: peer-level, direct, confident. These are founders and engineers — not corporate HR.
+- Do NOT open with "I hope this finds you well" or "Thank you for connecting" """,
 
     "post_application_dm": """Generate a short LinkedIn message to send after Soham has already applied for a role.
 STRICT LIMIT: Under 80 words.
@@ -174,6 +186,22 @@ GENERATE: {message_type}
     )
 
     raw = response.content[0].text.strip()
+
+    # Actively hiring sequence — returns connection_request + followup_dm
+    if message_type == "actively_hiring_sequence":
+        connection_request = ""
+        followup_lines = []
+        followup_started = False
+        for line in raw.split("\n"):
+            if line.upper().startswith("CONNECTION_REQUEST:"):
+                connection_request = line[len("CONNECTION_REQUEST:"):].strip()
+            elif line.upper().startswith("FOLLOWUP_DM:"):
+                followup_lines.append(line[len("FOLLOWUP_DM:"):].strip())
+                followup_started = True
+            elif followup_started:
+                followup_lines.append(line)
+        followup_dm = "\n".join(followup_lines).strip()
+        return {"connection_request": connection_request, "followup_dm": followup_dm, "raw": raw}
 
     # Cover letter — body only, no subject line
     if message_type == "cover_letter":

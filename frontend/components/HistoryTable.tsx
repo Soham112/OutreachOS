@@ -20,7 +20,7 @@ const MESSAGE_TYPE_LABELS: Record<string, string> = {
   cold_email_detailed: "Cold Email (Detailed)",
   cold_email_followup: "Cold Email (Follow-up)",
   cover_letter: "Cover Letter",
-  actively_hiring_dm: "Actively Hiring DM",
+  actively_hiring_sequence: "Actively Hiring (2-Step)",
   post_application_dm: "Post-Application DM",
 };
 
@@ -128,22 +128,43 @@ export default function HistoryTable({ entries, onRefresh }: HistoryTableProps) 
               {expanded === entry.id && (
                 <tr key={`exp-${entry.id}`} className="bg-[#F8FAFC]">
                   <td colSpan={6} className="px-4 py-4">
-                    <div className="space-y-3">
-                      {entry.subject && (
-                        <div>
-                          <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Subject</span>
-                          <p className="text-sm font-medium text-[#0F172A] mt-0.5">{entry.subject}</p>
+                    {entry.message_type === "actively_hiring_sequence" ? (
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="w-4 h-4 rounded-full bg-[#1B3A6B] text-white text-xs font-bold flex items-center justify-center">1</span>
+                            <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Connection Request</span>
+                          </div>
+                          <p className="text-sm text-[#334155] whitespace-pre-wrap leading-relaxed pl-6">{entry.subject}</p>
+                          <div className="pl-6"><CopyButton text={entry.subject} small label="Copy" /></div>
                         </div>
-                      )}
-                      <div>
-                        <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Message</span>
-                        <p className="text-sm text-[#334155] mt-0.5 whitespace-pre-wrap leading-relaxed">{entry.message_body}</p>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="w-4 h-4 rounded-full bg-[#1B3A6B] text-white text-xs font-bold flex items-center justify-center">2</span>
+                            <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Follow-up DM</span>
+                          </div>
+                          <p className="text-sm text-[#334155] whitespace-pre-wrap leading-relaxed pl-6">{entry.message_body}</p>
+                          <div className="pl-6"><CopyButton text={entry.message_body} small label="Copy" /></div>
+                        </div>
                       </div>
-                      <CopyButton
-                        text={entry.subject ? `Subject: ${entry.subject}\n\n${entry.message_body}` : entry.message_body}
-                        label="Copy Message"
-                      />
-                    </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {entry.subject && (
+                          <div>
+                            <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Subject</span>
+                            <p className="text-sm font-medium text-[#0F172A] mt-0.5">{entry.subject}</p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Message</span>
+                          <p className="text-sm text-[#334155] mt-0.5 whitespace-pre-wrap leading-relaxed">{entry.message_body}</p>
+                        </div>
+                        <CopyButton
+                          text={entry.subject ? `Subject: ${entry.subject}\n\n${entry.message_body}` : entry.message_body}
+                          label="Copy Message"
+                        />
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}

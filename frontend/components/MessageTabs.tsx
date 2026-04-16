@@ -24,9 +24,9 @@ const COLD_SUBTYPES = [
 
 const APPLIED_SUBTYPES = [
   {
-    id: "actively_hiring_dm",
+    id: "actively_hiring_sequence",
     label: "They're Actively Hiring",
-    desc: "Found via LinkedIn search · Haven't applied yet",
+    desc: "Generates Step 1 (connection request) + Step 2 (follow-up DM)",
   },
   {
     id: "post_application_dm",
@@ -77,6 +77,89 @@ function JdWarning() {
         <circle cx="7" cy="10" r="0.5" fill="#b45309"/>
       </svg>
       <span>No job description provided. Cover letter will be general. Go back and attach a JD for a role-specific letter.</span>
+    </div>
+  );
+}
+
+function SequenceBox({
+  result,
+  profile,
+  onSave,
+}: {
+  result: GenerateResult;
+  profile: ProfileData;
+  onSave: () => void;
+}) {
+  const [saved, setSaved] = useState(false);
+  const cr = result.connection_request || "";
+  const dm = result.followup_dm || "";
+
+  const handleSave = async () => {
+    try {
+      await saveHistory({
+        recipient_name: profile.name,
+        company: profile.company,
+        recipient_type: profile.recipient_type,
+        message_type: "actively_hiring_sequence",
+        subject: cr,
+        message_body: dm,
+      });
+      setSaved(true);
+      onSave();
+    } catch {
+      alert("Failed to save to history");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Step 1 */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-[#1B3A6B] text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+          <span className="text-sm font-semibold text-[#0F172A]">Send this as your Connection Request</span>
+        </div>
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <CharCounter text={cr} limit={300} />
+            <CopyButton text={cr} small />
+          </div>
+          <p className="text-sm text-[#334155] whitespace-pre-wrap leading-relaxed">{cr}</p>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
+        <div className="flex-1 border-t border-dashed border-[#E2E8F0]" />
+        <span>After they accept (1–3 days)</span>
+        <div className="flex-1 border-t border-dashed border-[#E2E8F0]" />
+      </div>
+
+      {/* Step 2 */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-[#1B3A6B] text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+          <span className="text-sm font-semibold text-[#0F172A]">Send this as your Follow-up DM</span>
+        </div>
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <WordCounter text={dm} />
+            <CopyButton text={dm} small />
+          </div>
+          <p className="text-sm text-[#334155] whitespace-pre-wrap leading-relaxed">{dm}</p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saved}
+          className="btn-secondary text-sm py-1.5"
+        >
+          {saved ? "Saved!" : "Save to History"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -181,7 +264,7 @@ function MessageBox({
 export default function MessageTabs({ profile }: MessageTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("connection_request");
   const [coldSubtype, setColdSubtype] = useState<ColdSubtype>("cold_email_short");
-  const [appliedSubtype, setAppliedSubtype] = useState<AppliedSubtype>("actively_hiring_dm");
+  const [appliedSubtype, setAppliedSubtype] = useState<AppliedSubtype>("actively_hiring_sequence");
   const [roleName, setRoleName] = useState("");
   const [results, setResults] = useState<Record<string, GenerateResult>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -317,12 +400,20 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
 
         {results[currentKey] && !loading[currentKey] && (
           <>
-            <MessageBox
-              result={results[currentKey]}
-              messageType={currentKey}
-              profile={profile}
-              onSave={() => setSavedCount((c) => c + 1)}
-            />
+            {currentKey === "actively_hiring_sequence" ? (
+              <SequenceBox
+                result={results[currentKey]}
+                profile={profile}
+                onSave={() => setSavedCount((c) => c + 1)}
+              />
+            ) : (
+              <MessageBox
+                result={results[currentKey]}
+                messageType={currentKey}
+                profile={profile}
+                onSave={() => setSavedCount((c) => c + 1)}
+              />
+            )}
             <button
               onClick={() => generate(currentKey)}
               className="text-xs text-[#64748B] hover:text-[#1B3A6B] underline"

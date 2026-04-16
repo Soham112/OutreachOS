@@ -13,7 +13,7 @@ MessageType = Literal[
     "cold_email_detailed",
     "cold_email_followup",
     "cover_letter",
-    "actively_hiring_dm",
+    "actively_hiring_sequence",
     "post_application_dm",
 ]
 
