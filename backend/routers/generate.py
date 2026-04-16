@@ -12,6 +12,7 @@ MessageType = Literal[
     "cold_email_short",
     "cold_email_detailed",
     "cold_email_followup",
+    "cover_letter",
 ]
 
 

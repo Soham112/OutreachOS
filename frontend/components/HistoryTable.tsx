@@ -19,6 +19,7 @@ const MESSAGE_TYPE_LABELS: Record<string, string> = {
   cold_email_short: "Cold Email (Short)",
   cold_email_detailed: "Cold Email (Detailed)",
   cold_email_followup: "Cold Email (Follow-up)",
+  cover_letter: "Cover Letter",
 };
 
 interface HistoryTableProps {

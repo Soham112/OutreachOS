@@ -90,6 +90,24 @@ Format your response EXACTLY as:
 SUBJECT: [subject line here]
 BODY: [body text here]
 - Very brief, light touch, no pressure""",
+
+    "cover_letter": """Generate a professional cover letter.
+Length: 300-380 words total. Four tight paragraphs.
+Format your response EXACTLY as:
+BODY: [full cover letter text here]
+
+Paragraph structure:
+1. HOOK (2-3 sentences): Open with why this specific company and role. Reference something concrete from the JD or recipient's company — a product, tech stack, team mission, or recent work. Do not open with "I am writing to apply."
+2. EXPERIENCE (3-4 sentences): Establish Soham's background. Map his most relevant experience directly to what the JD asks for. Be specific — name tools, scale, outcomes.
+3. PROOF (3-4 sentences): Pick ONE or TWO achievements from Soham's profile that most directly match the role requirements. Include real numbers where they exist. Make the connection to the role explicit.
+4. CLOSE (2-3 sentences): Express genuine interest, mention availability (May 2026), include portfolio link (soham-portfolio-seven.vercel.app), and a clear but low-pressure call to action.
+
+Rules:
+- If recipient name is available, address it to them. Otherwise use "Hiring Team".
+- If no JD is provided, write a strong general cover letter for a Data Scientist / ML Engineer role but note it is less targeted.
+- Never use "I am passionate about", "synergy", "leverage", or "I would be a great fit".
+- Do not repeat the same achievement twice across paragraphs.
+- End with: Sincerely, Soham Patil""",
 }
 
 
@@ -130,6 +148,19 @@ GENERATE: {message_type}
     )
 
     raw = response.content[0].text.strip()
+
+    # Cover letter — body only, no subject line
+    if message_type == "cover_letter":
+        body_lines = []
+        body_started = False
+        for line in raw.split("\n"):
+            if line.upper().startswith("BODY:"):
+                body_lines.append(line[len("BODY:"):].strip())
+                body_started = True
+            elif body_started:
+                body_lines.append(line)
+        body = "\n".join(body_lines).strip() or raw
+        return {"subject": "", "body": body, "raw": raw}
 
     # Parse structured responses (inmail, cold emails)
     if message_type in ("inmail", "cold_email_short", "cold_email_detailed", "cold_email_followup"):

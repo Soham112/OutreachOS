@@ -29,7 +29,8 @@ export interface GenerateRequest {
     | "inmail"
     | "cold_email_short"
     | "cold_email_detailed"
-    | "cold_email_followup";
+    | "cold_email_followup"
+    | "cover_letter";
   jd_text?: string;
 }
 

@@ -12,6 +12,7 @@ const TABS = [
   { id: "followup", label: "Follow-up", emoji: "💬" },
   { id: "inmail", label: "InMail", emoji: "📨" },
   { id: "cold_email", label: "Cold Email", emoji: "📧" },
+  { id: "cover_letter", label: "Cover Letter", emoji: "📄" },
 ] as const;
 
 const COLD_SUBTYPES = [
@@ -42,6 +43,26 @@ function CharCounter({ text, limit }: { text: string; limit: number }) {
     <span className={`text-xs font-mono ${over ? "text-red-500" : "text-[#94A3B8]"}`}>
       {count}/{limit}
     </span>
+  );
+}
+
+function WordCounter({ text }: { text: string }) {
+  const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+  return (
+    <span className="text-xs font-mono text-[#94A3B8]">{count} words</span>
+  );
+}
+
+function JdWarning() {
+  return (
+    <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0">
+        <path d="M7 2L12.5 11.5H1.5L7 2Z" stroke="#b45309" strokeWidth="1.3" strokeLinejoin="round"/>
+        <path d="M7 6v2.5" stroke="#b45309" strokeWidth="1.3" strokeLinecap="round"/>
+        <circle cx="7" cy="10" r="0.5" fill="#b45309"/>
+      </svg>
+      <span>No job description provided. Cover letter will be general. Go back and attach a JD for a role-specific letter.</span>
+    </div>
   );
 }
 
@@ -89,13 +110,21 @@ function MessageBox({
         )}
         <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Body</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">
+                {messageType === "cover_letter" ? "Cover Letter" : "Body"}
+              </span>
+              {messageType === "cover_letter" && <WordCounter text={result.body || ""} />}
+            </div>
             <CopyButton text={result.body || ""} small />
           </div>
           <p className="text-sm text-[#334155] whitespace-pre-wrap leading-relaxed">{result.body}</p>
         </div>
         <div className="flex items-center gap-2">
-          <CopyButton text={`Subject: ${result.subject}\n\n${result.body}`} label="Copy All" />
+          <CopyButton
+            text={messageType === "cover_letter" ? (result.body || "") : `Subject: ${result.subject}\n\n${result.body}`}
+            label="Copy All"
+          />
           <button
             onClick={handleSave}
             disabled={saved}
@@ -202,6 +231,11 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
               </button>
             ))}
           </div>
+        )}
+
+        {/* JD warning for cover letter */}
+        {activeTab === "cover_letter" && !profile.jd_text && (
+          <JdWarning />
         )}
 
         {/* Generate button */}
