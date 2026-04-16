@@ -91,6 +91,26 @@ SUBJECT: [subject line here]
 BODY: [body text here]
 - Very brief, light touch, no pressure""",
 
+    "actively_hiring_dm": """Generate a LinkedIn direct message to someone who has publicly signaled they are hiring.
+Length: 150-200 words.
+- Open by directly acknowledging you saw they're hiring for {role_name} — do not be vague or say "I came across your profile"
+- One specific sentence about their company, product, or work that genuinely attracted Soham to this role
+- Two to three sentences of the most relevant experience/achievements that map to what they need — be specific, use real numbers
+- Close with a direct ask: "happy to send my resume" or "open to a quick call this week"
+- Tone: peer-level, confident, direct. These are founders and engineers — not corporate hiring managers. Skip the formality.
+- Do NOT open with "I hope this message finds you well" or "I am writing to express my interest"
+- Output ONLY the message text, nothing else.""",
+
+    "post_application_dm": """Generate a short LinkedIn message to send after Soham has already applied for a role.
+STRICT LIMIT: Under 80 words.
+- Open by stating directly that you just applied for {role_name}
+- One sentence: something specific about their company that made you apply — reference something real from their profile
+- One sentence: single strongest credential that makes Soham stand out for this role
+- Close: low-pressure — "happy to chat if helpful" or similar
+- Tone: confident and brief. The application exists — this is just a human nudge, not a re-pitch.
+- Do NOT repeat everything from the resume. Less is more here.
+- Output ONLY the message text, nothing else.""",
+
     "cover_letter": """Generate a professional cover letter.
 Length: 300-380 words total. Four tight paragraphs.
 Format your response EXACTLY as:
@@ -116,6 +136,7 @@ def generate_message(
     recipient_type: str,
     message_type: str,
     jd_text: str = "",
+    role_name: str = "",
 ) -> dict:
     """
     Call Claude API to generate an outreach message.
@@ -126,12 +147,17 @@ def generate_message(
     jd_provided = "yes" if jd_text.strip() else "no"
     jd_content = jd_text.strip() if jd_text.strip() else "none"
 
-    type_instruction = MESSAGE_TYPE_INSTRUCTIONS.get(message_type, "Generate an outreach message.")
+    raw_instruction = MESSAGE_TYPE_INSTRUCTIONS.get(message_type, "Generate an outreach message.")
+    # Inject role_name into instructions that reference it
+    role_label = role_name.strip() if role_name.strip() else "the open role"
+    type_instruction = raw_instruction.replace("{role_name}", role_label)
 
     user_prompt = f"""RECIPIENT PROFILE:
 {recipient_profile}
 
 RECIPIENT TYPE: {recipient_type}
+
+TARGET ROLE: {role_label}
 
 JD PROVIDED: {jd_provided}
 JD CONTENT: {jd_content}

@@ -13,6 +13,7 @@ const TABS = [
   { id: "inmail", label: "InMail", emoji: "📨" },
   { id: "cold_email", label: "Cold Email", emoji: "📧" },
   { id: "cover_letter", label: "Cover Letter", emoji: "📄" },
+  { id: "applied_outreach", label: "Applied Outreach", emoji: "🎯" },
 ] as const;
 
 const COLD_SUBTYPES = [
@@ -21,8 +22,22 @@ const COLD_SUBTYPES = [
   { id: "cold_email_followup", label: "Follow-up", desc: "Under 50 words · After no reply" },
 ] as const;
 
+const APPLIED_SUBTYPES = [
+  {
+    id: "actively_hiring_dm",
+    label: "They're Actively Hiring",
+    desc: "Found via LinkedIn search · Haven't applied yet",
+  },
+  {
+    id: "post_application_dm",
+    label: "Already Applied",
+    desc: "Just submitted · Short nudge to get noticed",
+  },
+] as const;
+
 type TabId = typeof TABS[number]["id"];
 type ColdSubtype = typeof COLD_SUBTYPES[number]["id"];
+type AppliedSubtype = typeof APPLIED_SUBTYPES[number]["id"];
 
 function LoadingSpinner() {
   return (
@@ -166,15 +181,25 @@ function MessageBox({
 export default function MessageTabs({ profile }: MessageTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("connection_request");
   const [coldSubtype, setColdSubtype] = useState<ColdSubtype>("cold_email_short");
+  const [appliedSubtype, setAppliedSubtype] = useState<AppliedSubtype>("actively_hiring_dm");
+  const [roleName, setRoleName] = useState("");
   const [results, setResults] = useState<Record<string, GenerateResult>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [, setSavedCount] = useState(0);
 
   const currentKey =
-    activeTab === "cold_email" ? coldSubtype : activeTab;
+    activeTab === "cold_email"
+      ? coldSubtype
+      : activeTab === "applied_outreach"
+      ? appliedSubtype
+      : activeTab;
 
   const generate = async (key: string) => {
     if (loading[key]) return;
+    if (activeTab === "applied_outreach" && !roleName.trim()) {
+      alert("Please enter the role name before generating.");
+      return;
+    }
     setLoading((l) => ({ ...l, [key]: true }));
     try {
       const res = await generateMessage({
@@ -182,6 +207,7 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
         recipient_type: profile.recipient_type,
         message_type: key as Parameters<typeof generateMessage>[0]["message_type"],
         jd_text: profile.jd_text || "",
+        role_name: roleName.trim(),
       });
       setResults((r) => ({ ...r, [key]: res.result }));
     } catch (err: unknown) {
@@ -233,6 +259,40 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
           </div>
         )}
 
+        {/* Applied outreach sub-tabs + role input */}
+        {activeTab === "applied_outreach" && (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {APPLIED_SUBTYPES.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setAppliedSubtype(sub.id)}
+                  className={`flex-1 border rounded-lg px-3 py-2 text-left transition-all ${
+                    appliedSubtype === sub.id
+                      ? "border-[#1B3A6B] bg-[#f0f4fb]"
+                      : "border-[#E2E8F0] hover:border-[#1B3A6B]/40"
+                  }`}
+                >
+                  <p className="text-sm font-medium text-[#0F172A]">{sub.label}</p>
+                  <p className="text-xs text-[#94A3B8]">{sub.desc}</p>
+                </button>
+              ))}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">
+                Role Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={roleName}
+                onChange={(e) => setRoleName(e.target.value)}
+                placeholder="e.g. AI Engineer, ML Engineer, Data Scientist"
+                className="w-full border border-[#CBD5E1] rounded-lg px-3 py-2 text-sm text-[#334155] placeholder-[#94A3B8] focus:outline-none focus:border-[#1B3A6B] focus:ring-1 focus:ring-[#1B3A6B]/20 transition-all"
+              />
+            </div>
+          </div>
+        )}
+
         {/* JD warning for cover letter */}
         {activeTab === "cover_letter" && !profile.jd_text && (
           <JdWarning />
@@ -244,8 +304,11 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
             onClick={() => generate(currentKey)}
             className="btn-primary w-full"
           >
-            Generate {activeTab === "cold_email"
+            Generate{" "}
+            {activeTab === "cold_email"
               ? COLD_SUBTYPES.find((s) => s.id === coldSubtype)?.label + " Email"
+              : activeTab === "applied_outreach"
+              ? APPLIED_SUBTYPES.find((s) => s.id === appliedSubtype)?.label + " Message"
               : TABS.find((t) => t.id === activeTab)?.label}
           </button>
         )}

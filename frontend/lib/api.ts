@@ -30,8 +30,11 @@ export interface GenerateRequest {
     | "cold_email_short"
     | "cold_email_detailed"
     | "cold_email_followup"
-    | "cover_letter";
+    | "cover_letter"
+    | "actively_hiring_dm"
+    | "post_application_dm";
   jd_text?: string;
+  role_name?: string;
 }
 
 export interface GenerateResult {

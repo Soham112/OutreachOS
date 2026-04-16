@@ -13,6 +13,8 @@ MessageType = Literal[
     "cold_email_detailed",
     "cold_email_followup",
     "cover_letter",
+    "actively_hiring_dm",
+    "post_application_dm",
 ]
 
 
@@ -21,6 +23,7 @@ class GenerateRequest(BaseModel):
     recipient_type: Literal["RECRUITER", "HIRING_MANAGER"]
     message_type: MessageType
     jd_text: Optional[str] = ""
+    role_name: Optional[str] = ""
 
 
 @router.post("/message")
@@ -34,6 +37,7 @@ async def generate_outreach_message(req: GenerateRequest):
             recipient_type=req.recipient_type,
             message_type=req.message_type,
             jd_text=req.jd_text or "",
+            role_name=req.role_name or "",
         )
         return {"success": True, "result": result, "message_type": req.message_type}
     except Exception as e:
