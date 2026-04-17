@@ -22,6 +22,7 @@ const MESSAGE_TYPE_LABELS: Record<string, string> = {
   cover_letter: "Cover Letter",
   actively_hiring_sequence: "Actively Hiring (2-Step)",
   post_application_dm: "Post-Application DM",
+  applied_team_outreach: "Applied, Finding Team (2-Step)",
 };
 
 interface HistoryTableProps {
@@ -128,7 +129,7 @@ export default function HistoryTable({ entries, onRefresh }: HistoryTableProps) 
               {expanded === entry.id && (
                 <tr key={`exp-${entry.id}`} className="bg-[#F8FAFC]">
                   <td colSpan={6} className="px-4 py-4">
-                    {entry.message_type === "actively_hiring_sequence" ? (
+                    {(entry.message_type === "actively_hiring_sequence" || entry.message_type === "applied_team_outreach") ? (
                       <div className="space-y-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">

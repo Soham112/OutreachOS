@@ -33,6 +33,11 @@ const APPLIED_SUBTYPES = [
     label: "Already Applied",
     desc: "Just submitted · Short nudge to get noticed",
   },
+  {
+    id: "applied_team_outreach",
+    label: "Applied, Finding the Team",
+    desc: "Don't know the hiring manager · Reaching out to team members",
+  },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -83,10 +88,12 @@ function JdWarning() {
 
 function SequenceBox({
   result,
+  messageType,
   profile,
   onSave,
 }: {
   result: GenerateResult;
+  messageType: string;
   profile: ProfileData;
   onSave: () => void;
 }) {
@@ -100,7 +107,7 @@ function SequenceBox({
         recipient_name: profile.name,
         company: profile.company,
         recipient_type: profile.recipient_type,
-        message_type: "actively_hiring_sequence",
+        message_type: messageType,
         subject: cr,
         message_body: dm,
       });
@@ -400,9 +407,10 @@ export default function MessageTabs({ profile }: MessageTabsProps) {
 
         {results[currentKey] && !loading[currentKey] && (
           <>
-            {currentKey === "actively_hiring_sequence" ? (
+            {(currentKey === "actively_hiring_sequence" || currentKey === "applied_team_outreach") ? (
               <SequenceBox
                 result={results[currentKey]}
+                messageType={currentKey}
                 profile={profile}
                 onSave={() => setSavedCount((c) => c + 1)}
               />

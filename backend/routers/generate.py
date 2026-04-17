@@ -15,6 +15,7 @@ MessageType = Literal[
     "cover_letter",
     "actively_hiring_sequence",
     "post_application_dm",
+    "applied_team_outreach",
 ]
 
 

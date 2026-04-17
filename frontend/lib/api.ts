@@ -32,7 +32,8 @@ export interface GenerateRequest {
     | "cold_email_followup"
     | "cover_letter"
     | "actively_hiring_sequence"
-    | "post_application_dm";
+    | "post_application_dm"
+    | "applied_team_outreach";
   jd_text?: string;
   role_name?: string;
 }

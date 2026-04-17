@@ -115,6 +115,29 @@ FOLLOWUP_DM rules (this is sent after they accept the connection):
 - Tone: peer-level, direct, confident. These are founders and engineers — not corporate HR.
 - Do NOT open with "I hope this finds you well" or "Thank you for connecting" """,
 
+    "applied_team_outreach": """Generate TWO LinkedIn messages for someone who works at a company where Soham has already applied for {role_name}, but is NOT necessarily the hiring manager. Soham wants to connect with people on the team to get visibility.
+
+Format your response EXACTLY as:
+CONNECTION_REQUEST: [text here]
+FOLLOWUP_DM: [text here]
+
+CONNECTION_REQUEST rules:
+- STRICT LIMIT: Under 280 characters total — count every character, this is a hard LinkedIn limit
+- Be honest: mention you applied for {role_name} and are reaching out to connect with people on the team
+- Do NOT pretend they are the hiring manager or imply they have hiring authority
+- One genuine observation about their work or the company that shows you did your research
+- No buzzwords, no em dashes, no "I am writing to"
+- Tone: warm and direct, peer-level
+
+FOLLOWUP_DM rules:
+- STRICT LIMIT: Under 100 words
+- Open by thanking them briefly for connecting, then immediately get to the point
+- One sentence of context: applied for {role_name}, reaching out to team members to get a better sense of the team
+- One or two sentences of strongest relevant credentials (real numbers if possible)
+- Direct, humble ask: "Would you happen to know who's leading hiring for this role?" or "Would you be open to passing my profile along?"
+- Tone: genuinely humble and direct. They owe you nothing — make it easy to say yes or ignore.
+- Do NOT open with "I hope this finds you well" """,
+
     "post_application_dm": """Generate a short LinkedIn message to send after Soham has already applied for a role.
 STRICT LIMIT: Under 80 words.
 - Open by stating directly that you just applied for {role_name}
@@ -189,8 +212,8 @@ GENERATE: {message_type}
 
     raw = response.content[0].text.strip()
 
-    # Actively hiring sequence — returns connection_request + followup_dm
-    if message_type == "actively_hiring_sequence":
+    # Two-step sequence types — returns connection_request + followup_dm
+    if message_type in ("actively_hiring_sequence", "applied_team_outreach"):
         connection_request = ""
         followup_lines = []
         followup_started = False
