@@ -1,29 +1,27 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Literal
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import os
 from datetime import datetime
 
 router = APIRouter(prefix="/history", tags=["history"])
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../data/history.db")
-
-# Ensure the data directory exists (Railway containers don't persist empty dirs)
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
 def init_db():
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS outreach_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             created_at TEXT NOT NULL,
             recipient_name TEXT NOT NULL,
             company TEXT,
@@ -35,6 +33,7 @@ def init_db():
         )
     """)
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -62,10 +61,12 @@ async def save_message(req: SaveHistoryRequest):
     """Save a generated message to history."""
     conn = get_db()
     try:
-        cursor = conn.execute(
+        cur = conn.cursor()
+        cur.execute(
             """INSERT INTO outreach_history
                (created_at, recipient_name, company, recipient_type, message_type, subject, message_body, status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+               RETURNING id""",
             (
                 datetime.utcnow().isoformat(),
                 req.recipient_name,
@@ -77,8 +78,10 @@ async def save_message(req: SaveHistoryRequest):
                 req.status,
             ),
         )
+        new_id = cur.fetchone()[0]
         conn.commit()
-        return {"success": True, "id": cursor.lastrowid}
+        cur.close()
+        return {"success": True, "id": new_id}
     finally:
         conn.close()
 
@@ -88,9 +91,10 @@ async def list_history():
     """Get all history entries, newest first."""
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT * FROM outreach_history ORDER BY created_at DESC"
-        ).fetchall()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM outreach_history ORDER BY created_at DESC")
+        rows = cur.fetchall()
+        cur.close()
         return {"success": True, "history": [dict(r) for r in rows]}
     finally:
         conn.close()
@@ -101,9 +105,10 @@ async def get_history_entry(entry_id: int):
     """Get a single history entry."""
     conn = get_db()
     try:
-        row = conn.execute(
-            "SELECT * FROM outreach_history WHERE id = ?", (entry_id,)
-        ).fetchone()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM outreach_history WHERE id = %s", (entry_id,))
+        row = cur.fetchone()
+        cur.close()
         if not row:
             raise HTTPException(status_code=404, detail="Entry not found")
         return {"success": True, "entry": dict(row)}
@@ -116,13 +121,16 @@ async def update_status(entry_id: int, req: UpdateStatusRequest):
     """Update the status of a history entry."""
     conn = get_db()
     try:
-        result = conn.execute(
-            "UPDATE outreach_history SET status = ? WHERE id = ?",
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE outreach_history SET status = %s WHERE id = %s",
             (req.status, entry_id),
         )
         conn.commit()
-        if result.rowcount == 0:
+        if cur.rowcount == 0:
+            cur.close()
             raise HTTPException(status_code=404, detail="Entry not found")
+        cur.close()
         return {"success": True}
     finally:
         conn.close()
@@ -133,12 +141,13 @@ async def delete_history_entry(entry_id: int):
     """Delete a history entry."""
     conn = get_db()
     try:
-        result = conn.execute(
-            "DELETE FROM outreach_history WHERE id = ?", (entry_id,)
-        )
+        cur = conn.cursor()
+        cur.execute("DELETE FROM outreach_history WHERE id = %s", (entry_id,))
         conn.commit()
-        if result.rowcount == 0:
+        if cur.rowcount == 0:
+            cur.close()
             raise HTTPException(status_code=404, detail="Entry not found")
+        cur.close()
         return {"success": True}
     finally:
         conn.close()
