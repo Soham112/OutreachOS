@@ -12,11 +12,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
 def get_db():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not set. Add a PostgreSQL plugin in Railway.")
     conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
 def init_db():
+    if not DATABASE_URL:
+        print("WARNING: DATABASE_URL not set — skipping DB init. History endpoints will fail.")
+        return
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
